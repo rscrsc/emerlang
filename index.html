@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+  <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>emerLang</title>
+  <style>
+    html,body { margin:0; height:100%; background:#0e1116; }
+    #canvas { width:100vw; height:100vh; display:block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <script type="module">
+    const canvas = document.getElementById('canvas');
+    window.Module = {
+      canvas,
+      onRuntimeInitialized(){}
+    };
+  </script>
+  <script src="emerlang.js"></script>
+</body>
+</html>
+

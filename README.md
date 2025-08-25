@@ -1,5 +1,9 @@
 # emerLang - An ECS-based Emulater to Explore the Emergence of Language
 
+## TODO List
+- [ ] A seperate WebGL renderer (instead of imgui BackgroundList)
+- [ ] Zero copy SoA indexing
+
 ## 1）交流需求从哪来（第一性原理）
 用最小假设，让“说话”自带动力：
 - **部分可观测环境**：视觉半径有限、地形遮挡、资源/威胁在视野外（信息不对称）。

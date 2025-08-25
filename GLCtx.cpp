@@ -37,13 +37,15 @@ void GLCtx::drawScene () {
     glClear(GL_COLOR_BUFFER_BIT);
 
     static uint32_t last_seq = 0;
-    SimState cur = { sim.g_circle.pos, sim.g_circle.radius };
+    SimState cur = {};
     if (sim.g_chan.try_consume(cur, last_seq)) {
         // got fresh data, do something special if needed
     }
 
     ImDrawList* dl = ImGui::GetBackgroundDrawList();
-    dl->AddCircleFilled(cur.pos, cur.radius, IM_COL32(90,170,255,255), 32);
+    for (int i = 0; i < cur.count; ++i) {
+        dl->AddCircleFilled(cur.pos[i], cur.radius, IM_COL32(90,170,255,255), 32);
+    }
 }
 
 void GLCtx::drawUI () {
@@ -54,8 +56,10 @@ void GLCtx::drawUI () {
       ui::play_white_noise(1000, 44100);
     }
     ImGui::Separator();
-    ImGui::Text("Circle (x=%.1f, y=%.1f)", sim.g_circle.pos.x, sim.g_circle.pos.y);
-    ImGui::SliderFloat("Radius", &sim.g_circle.radius, 5.0f, 80.0f);
+    static float r_ui = 20.0f;
+    if (ImGui::SliderFloat("Radius", &r_ui, 5.0f, 80.0f)) {
+        sim.g_ui_radius.store(r_ui, std::memory_order_relaxed);
+    }
     ImGui::End();
 }
 

@@ -113,10 +113,10 @@ namespace ImGui_ImplWeb {
         return true;
     }
 
-    void NewFrame(int fb_w_css, int fb_h_css, double dt_ms) {
+    void NewFrame(int fb_w_css, int fb_h_css, double dt) {
         ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2((float)fb_w_css, (float)fb_h_css);
-        io.DeltaTime   = (float)dt_ms;
+        io.DeltaTime   = (float)dt;
     }
 
     void Shutdown() { }

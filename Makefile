@@ -1,6 +1,6 @@
-CFLAGS += -std=c++20 -O3 -Wall -Wextra -Wpedantic -I./ -I./imgui
+CFLAGS += -std=c++20 -O3 -Wall -Wextra -Wpedantic -I./ -I./imgui -pthread
 CFLAGS += -MMD -MP
-LDFLAGS += -L./imgui -limgui -pthread -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=3 \
+LDFLAGS += -L./imgui -limgui -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=3 \
 		   -sPROXY_TO_PTHREAD=1 -sOFFSCREENCANVAS_SUPPORT=1
 
 IMGUI_SRCS := $(wildcard imgui/*.cpp) imgui/backends/imgui_impl_opengl3.cpp

@@ -1,27 +1,10 @@
 #include "GLCtx.h"
 #include "ui_callback.h"
+#include "Sim.h"
 
-static float frand(float a, float b){ return a + (b-a) * (float)rand()/(float)RAND_MAX; }
+GLCtx::GLCtx (Sim& sim) : sim(sim) {}
 
-struct Circle {
-    ImVec2 pos{200,200};
-    ImVec2 vel{100,80};
-    float  radius = 20.0f;
-    void update(float dt, const ImVec2& bounds){
-      vel.x += frand(-30.f, 30.f)*dt;
-      vel.y += frand(-30.f, 30.f)*dt;
-      float v = std::sqrt(vel.x*vel.x + vel.y*vel.y);
-      const float vmax = 120.f;
-      if (v > vmax) { vel.x *= vmax/v; vel.y *= vmax/v; }
-      pos.x += vel.x * dt; pos.y += vel.y * dt;
-      if (pos.x < radius){ pos.x = radius; vel.x = std::abs(vel.x); }
-      if (pos.x > bounds.x - radius){ pos.x = bounds.x - radius; vel.x = -std::abs(vel.x); }
-      if (pos.y < radius){ pos.y = radius; vel.y = std::abs(vel.y); }
-      if (pos.y > bounds.y - radius){ pos.y = bounds.y - radius; vel.y = -std::abs(vel.y); }
-    }
-} g_circle;
-
-bool GLCtx::init () {
+bool GLCtx::configure () {
     EmscriptenWebGLContextAttributes attr;
     emscripten_webgl_init_context_attributes(&attr);
     attr.alpha = false;
@@ -53,8 +36,14 @@ void GLCtx::drawScene () {
     glClearColor(0.07f, 0.08f, 0.11f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    static uint32_t last_seq = 0;
+    SimState cur = { sim.g_circle.pos, sim.g_circle.radius };
+    if (sim.g_chan.try_consume(cur, last_seq)) {
+        // got fresh data, do something special if needed
+    }
+
     ImDrawList* dl = ImGui::GetBackgroundDrawList();
-    dl->AddCircleFilled(g_circle.pos, g_circle.radius, IM_COL32(90,170,255,255), 32);
+    dl->AddCircleFilled(cur.pos, cur.radius, IM_COL32(90,170,255,255), 32);
 }
 
 void GLCtx::drawUI () {
@@ -65,25 +54,19 @@ void GLCtx::drawUI () {
       ui::play_white_noise(1000, 44100);
     }
     ImGui::Separator();
-    ImGui::Text("Circle (x=%.1f, y=%.1f)", g_circle.pos.x, g_circle.pos.y);
-    ImGui::SliderFloat("Radius", &g_circle.radius, 5.0f, 80.0f);
+    ImGui::Text("Circle (x=%.1f, y=%.1f)", sim.g_circle.pos.x, sim.g_circle.pos.y);
+    ImGui::SliderFloat("Radius", &sim.g_circle.radius, 5.0f, 80.0f);
     ImGui::End();
 }
 
-void GLCtx::update (double dt_ms) {
-    double cssW_raw, cssH_raw;
-    emscripten_get_element_css_size("#canvas", &cssW_raw, &cssH_raw);
-    cssW = (int)cssW_raw;
-    cssH = (int)cssH_raw;
-    fbW = (int)(cssW_raw * dpr);
-    fbH = (int)(cssH_raw * dpr);
-    emscripten_set_canvas_element_size("#canvas", fbW, fbH);
+void GLCtx::drawFrame () {
+    const double now = emscripten_get_now() * 0.001;
+    double dt = (previousTime == 0.0) ? 1.0/60.0
+                                            : (now - previousTime);
+    if (dt > 0.05) dt = 0.05;
+    previousTime = now;
 
-    g_circle.update((float)dt_ms, ImVec2((float)cssW, (float)cssH));
-}
-
-void GLCtx::drawFrame (double dt_ms) {
-    ImGui_ImplWeb::NewFrame(cssW, cssH, dt_ms);
+    ImGui_ImplWeb::NewFrame(cssW, cssH, dt);
     ImGuiIO& io = ImGui::GetIO();
     io.DisplayFramebufferScale = ImVec2((float)dpr, (float)dpr);
 
@@ -98,18 +81,21 @@ void GLCtx::drawFrame (double dt_ms) {
 }
 
 void GLCtx::main_loop () {
-    const double now_ms = emscripten_get_now() * 0.001;
-    double dt_ms = (previousTime_ms == 0.0) ? 1.0/60.0
-                                            : (now_ms - previousTime_ms);
-    if (dt_ms > 0.05) dt_ms = 0.05;
-    previousTime_ms = now_ms;
+    double cssW_raw, cssH_raw;
+    emscripten_get_element_css_size("#canvas", &cssW_raw, &cssH_raw);
+    cssW = (int)cssW_raw;
+    cssH = (int)cssH_raw;
+    fbW = (int)(cssW_raw * dpr);
+    fbH = (int)(cssH_raw * dpr);
+    sim.g_bounds_w.store((float)cssW_raw, std::memory_order_relaxed);
+    sim.g_bounds_h.store((float)cssH_raw, std::memory_order_relaxed);
+    emscripten_set_canvas_element_size("#canvas", fbW, fbH);
 
-    update(dt_ms);
-    drawFrame(dt_ms);
+    drawFrame();
 }
 
 void GLCtx::main_loop_callback(void* arg) {
         GLCtx* ctx = (GLCtx*)arg;
         ctx->main_loop();
-    }
+}
 

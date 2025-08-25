@@ -1,6 +1,7 @@
 CFLAGS += -std=c++20 -O3 -Wall -Wextra -Wpedantic -I./ -I./imgui
 CFLAGS += -MMD -MP
-LDFLAGS += -L./imgui -limgui
+LDFLAGS += -L./imgui -limgui -pthread -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=3 \
+		   -sPROXY_TO_PTHREAD=1 -sOFFSCREENCANVAS_SUPPORT=1
 
 IMGUI_SRCS := $(wildcard imgui/*.cpp) imgui/backends/imgui_impl_opengl3.cpp
 IMGUI_OBJS := $(patsubst %.cpp,%.o,$(filter %.cpp,$(IMGUI_SRCS)))
@@ -17,7 +18,7 @@ WEB_OUTPUT := $(addprefix $(WEB_OUTPUT_DIR)/,$(WEB_OUTPUT_FILES))
 .DEFAULT_GOAL := all
 
 all: $(WEB_OUTPUT)
-	python -m http.server -d public 6969
+	python serve.py
 
 # $(OBJS): dep
 

@@ -1,5 +1,3 @@
-#include <functional>
-
 #include "GLCtx.h"
 #include "Sim.h"
 
